@@ -15,8 +15,17 @@ const upload = multer({ dest: "uploads/" });
 
 app.post("/analyze_resume", upload.single("file"), async (req, res) => {
   try {
+    console.log("FILE:", req.file);   // 🔥 DEBUG
+    console.log("BODY:", req.body);   // 🔥 DEBUG
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
     const filePath = req.file.path;
+
     const result = await parseResume(filePath);
+
     fs.unlinkSync(filePath);
     res.json(result);
   } catch (error) {

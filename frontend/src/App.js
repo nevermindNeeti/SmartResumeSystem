@@ -1,9 +1,23 @@
 import React, { useState } from "react";
 import UploadResume from "./components/UploadResume";
-import ScoreCard from "./components/ScoreCard";
-import AnalysisPanel from "./components/AnalysisPanel";
+import Dashboard from "./components/Dashboard";
 
-function App() {
+const G = {
+  app: { minHeight: "100vh", background: "#f0f2f5", fontFamily: "'Outfit', sans-serif", color: "#0f172a" },
+  header: { background: "#ffffff", borderBottom: "1px solid #e2e8f0", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" },
+  headerInner: { maxWidth: "1300px", margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  logo: { display: "flex", alignItems: "center", gap: "10px", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "1.25rem", color: "#0f172a", letterSpacing: "-0.01em" },
+  logoDot: { width: "10px", height: "10px", borderRadius: "50%", background: "linear-gradient(135deg, #2563eb, #0ea5e9)" },
+  badge: { background: "#eff6ff", color: "#2563eb", padding: "4px 12px", borderRadius: "100px", fontSize: "0.75rem", fontWeight: 600, border: "1px solid #bfdbfe" },
+  resetBtn: { background: "white", border: "1px solid #e2e8f0", color: "#64748b", padding: "8px 18px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: 500, display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" },
+  main: { flex: 1, padding: "32px 24px", maxWidth: "1300px", margin: "0 auto", width: "100%" },
+  loadWrap: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "70vh", gap: "20px" },
+  loadCard: { background: "white", borderRadius: "20px", padding: "48px 56px", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" },
+  loadTitle: { fontFamily: "'Playfair Display', serif", fontSize: "1.4rem", fontWeight: 700, color: "#0f172a" },
+  loadSub: { color: "#64748b", fontSize: "0.9rem" },
+};
+
+export default function App() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -14,74 +28,69 @@ function App() {
     const formData = new FormData();
     formData.append("resume", file);
     try {
-      const response = await fetch("http://127.0.0.1:5001/analyze_resume", { method: "POST", body: formData });
-      const data = await response.json();
+      const res = await fetch("http://127.0.0.1:5001/analyze_resume", { method: "POST", body: formData });
+      const data = await res.json();
       if (data.error) alert("Error: " + data.error);
       else setAnalysis(data);
     } catch {
-      alert("Cannot connect to backend. Make sure Flask is running:\n\ncd backend\npython app.py");
+      alert("Cannot connect to backend.\n\nRun: cd backend && python app.py");
     } finally {
       setLoading(false);
     }
   };
 
-  const styles = {
-    app: { minHeight: "100vh", display: "flex", flexDirection: "column", background: "#080c14", color: "#e2e8f0", fontFamily: "'DM Sans', sans-serif" },
-    header: { borderBottom: "1px solid #1e2d45", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", background: "rgba(8,12,20,0.9)", position: "sticky", top: 0, zIndex: 100 },
-    headerInner: { width: "100%", maxWidth: "1100px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" },
-    logo: { display: "flex", alignItems: "center", gap: "10px", fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1.2rem" },
-    logoIcon: { color: "#3b82f6", fontSize: "1.4rem" },
-    resetBtn: { background: "transparent", border: "1px solid #1e2d45", color: "#64748b", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem" },
-    main: { flex: 1, padding: "40px 20px" },
-    dashboard: { maxWidth: "1100px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" },
-    loadingScreen: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: "16px" },
-    loadingText: { fontFamily: "'Syne', sans-serif", fontSize: "1.1rem", fontWeight: 600 },
-    loadingSub: { color: "#64748b", fontSize: "0.9rem" },
-  };
-
   return (
-    <div style={styles.app}>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-      <header style={styles.header}>
-        <div style={styles.headerInner}>
-          <div style={styles.logo}>
-            <span style={styles.logoIcon}>◈</span>
-            <span>Resume Analyser</span>
+    <div style={G.app}>
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fillBar { from { width: 0; } to { width: var(--w); } }
+        @keyframes drawCircle { from { stroke-dasharray: 0 339; } to { stroke-dasharray: var(--dash) 339; } }
+        .fade-up { animation: fadeUp 0.5s ease forwards; }
+        .fade-up-1 { animation: fadeUp 0.5s 0.1s ease both; }
+        .fade-up-2 { animation: fadeUp 0.5s 0.2s ease both; }
+        .fade-up-3 { animation: fadeUp 0.5s 0.3s ease both; }
+        .fade-up-4 { animation: fadeUp 0.5s 0.4s ease both; }
+        button:hover { opacity: 0.88; }
+      `}</style>
+
+      <header style={G.header}>
+        <div style={G.headerInner}>
+          <div style={G.logo}>
+            <div style={G.logoDot} />
+            Resume Analyser
           </div>
-          {analysis && (
-            <button style={styles.resetBtn} onClick={() => { setAnalysis(null); setFileName(""); }}>
-              ← Analyze Another
-            </button>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {analysis && <span style={G.badge}>Analysis Complete</span>}
+            {analysis && (
+              <button style={G.resetBtn} onClick={() => { setAnalysis(null); setFileName(""); }}>
+                ← New Analysis
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
-      <main style={styles.main}>
+      <div style={G.main}>
         {!analysis && !loading && <UploadResume onAnalyze={analyzeResume} />}
 
         {loading && (
-          <div style={styles.loadingScreen}>
-            <div style={{ width: 48, height: 48, border: "3px solid #1e2d45", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <p style={styles.loadingText}>Analyzing <strong>{fileName}</strong>...</p>
-            <p style={styles.loadingSub}>Scanning skills, sections & achievements</p>
+          <div style={G.loadWrap}>
+            <div style={G.loadCard}>
+              <div style={{ width: 52, height: 52, border: "3px solid #e2e8f0", borderTopColor: "#2563eb", borderRadius: "50%", animation: "spin 0.75s linear infinite" }} />
+              <div>
+                <p style={G.loadTitle}>Analysing your resume</p>
+                <p style={G.loadSub}>{fileName}</p>
+              </div>
+              <p style={{ color: "#94a3b8", fontSize: "0.82rem" }}>Scanning skills · Checking sections · Matching roles</p>
+            </div>
           </div>
         )}
 
-        {analysis && !loading && (
-          <div style={styles.dashboard}>
-            <ScoreCard
-              score={analysis.score}
-              wordCount={analysis.word_count}
-              sectionsFound={Object.values(analysis.sections || {}).filter(Boolean).length}
-              skillsCount={(analysis.skills_found || []).length}
-            />
-            <AnalysisPanel data={analysis} />
-          </div>
-        )}
-      </main>
+        {analysis && !loading && <Dashboard data={analysis} />}
+      </div>
     </div>
   );
 }
-
-export default App;
