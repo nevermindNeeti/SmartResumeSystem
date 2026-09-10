@@ -19,12 +19,31 @@ SmartResumeSystem is a resume analysis app with:
 ## Setup
 
 ### 1. Install backend dependencies
+#### macOS / Linux
 ```bash
 cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install flask flask-cors pdfplumber
 ```
+
+#### Windows PowerShell
+```powershell
+cd backend
+py -3 -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install flask flask-cors pdfplumber
+```
+
+#### Windows CMD
+```cmd
+cd backend
+py -3 -m venv venv
+venv\Scripts\activate.bat
+pip install flask flask-cors pdfplumber
+```
+
+> If your Windows setup uses `python` instead of `py`, replace `py -3` with `python`.
 
 ### 2. Install frontend dependencies
 ```bash
@@ -35,9 +54,24 @@ npm install
 ## Run the app
 
 ### Start the backend
+#### macOS / Linux
 ```bash
 cd backend
 source venv/bin/activate
+python backend/app.py
+```
+
+#### Windows PowerShell
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+python backend/app.py
+```
+
+#### Windows CMD
+```cmd
+cd backend
+venv\Scripts\activate.bat
 python backend/app.py
 ```
 
@@ -50,7 +84,7 @@ cd frontend
 npm start
 ```
 
-Then open:
+The frontend should open at:
 - `http://localhost:3000`
 
 ## Push to GitHub
@@ -73,11 +107,11 @@ git push
 ```
 
 ## Important notes
-- Do not commit venv or `node_modules/`.
-- Add venv to .gitignore if it is not already ignored.
+- Do not commit `venv/` or `node_modules/`.
+- Add `venv/` to `.gitignore` if it is not already ignored.
 - The React app uses the Flask backend on port `5001` by default.
 - If you want to use the nested Node backend instead, update the frontend API URL to `http://localhost:5000/analyze_resume` and run `node backend/backend/server.js`.
 
 ```
 
-Use this exact content in your `README.md` so another developer can clone, install, and run without changing the code.Use this exact content in your `README.md` so another developer can clone, install, and run without changing the code.
+Use this exact content in your `README.md` so another developer can clone, install, and run without changing the code.

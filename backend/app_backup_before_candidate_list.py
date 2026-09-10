@@ -1306,59 +1306,6 @@ def upload_candidate(job_id):
 
 
 # ============================================================
-# CANDIDATE LIST API
-# ============================================================
-
-@app.route("/jobs/<job_id>/candidates", methods=["GET"])
-@jwt_required()
-def get_candidates(job_id):
-
-    recruiter_id = get_jwt_identity()
-
-    # Verify that the job belongs to this recruiter.
-    job = jobs_collection.find_one({
-        "_id": ObjectId(job_id),
-        "recruiter_id": recruiter_id
-    })
-
-    if not job:
-        return jsonify({
-            "error": "Job not found or you are not authorized to access it"
-        }), 404
-
-    candidates = list(candidates_collection.find(
-        {
-            "job_id": job_id,
-            "recruiter_id": recruiter_id
-        },
-        {
-            "_id": 1,
-            "resume_filename": 1,
-            "resume_score": 1,
-            "job_match_score": 1,
-            "domain": 1,
-            "skills_found": 1,
-            "missing_skills": 1,
-            "matched_job_skills": 1,
-            "missing_job_skills": 1,
-            "status": 1,
-            "word_count": 1
-        }
-    ).sort("job_match_score", -1))
-
-    for candidate in candidates:
-        candidate["candidate_id"] = str(candidate.pop("_id"))
-
-    return jsonify({
-        "job_id": job_id,
-        "job_title": job.get("title"),
-        "company": job.get("company"),
-        "candidate_count": len(candidates),
-        "candidates": candidates
-    }), 200
-
-
-# ============================================================
 # HEALTH CHECK
 # ============================================================
 

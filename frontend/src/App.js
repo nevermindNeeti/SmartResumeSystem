@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import UploadResume from "./components/UploadResume";
 import Dashboard from "./components/Dashboard";
+import RecruiterDashboard from "./pages/RecruiterDashboard";
 
 const G = {
   app: { minHeight: "100vh", background: "#f0f2f5", fontFamily: "'Outfit', sans-serif", color: "#0f172a" },
@@ -18,6 +19,7 @@ const G = {
 };
 
 export default function App() {
+  const [mode, setMode] = useState("candidate");
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -62,21 +64,60 @@ export default function App() {
             <div style={G.logoDot} />
             Resume Analyser
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {analysis && <span style={G.badge}>Analysis Complete</span>}
-            {analysis && (
-              <button style={G.resetBtn} onClick={() => { setAnalysis(null); setFileName(""); }}>
-                ← New Analysis
-              </button>
-            )}
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+
+        <button
+        style={{
+      ...G.resetBtn,
+      background: mode === "candidate" ? "#eff6ff" : "white",
+      color: mode === "candidate" ? "#2563eb" : "#64748b",
+      borderColor: mode === "candidate" ? "#bfdbfe" : "#e2e8f0",
+    }}
+    onClick={() => setMode("candidate")}
+  >
+    Resume Analyser
+  </button>
+
+  <button
+    style={{
+      ...G.resetBtn,
+      background: mode === "recruiter" ? "#eff6ff" : "white",
+      color: mode === "recruiter" ? "#2563eb" : "#64748b",
+      borderColor: mode === "recruiter" ? "#bfdbfe" : "#e2e8f0",
+    }}
+    onClick={() => setMode("recruiter")}
+  >
+    Recruiter Portal
+  </button>
+
+  {mode === "candidate" && analysis && (
+    <span style={G.badge}>Analysis Complete</span>
+  )}
+
+  {mode === "candidate" && analysis && (
+    <button
+      style={G.resetBtn}
+      onClick={() => {
+        setAnalysis(null);
+        setFileName("");
+      }}
+    >
+      ← New Analysis
+    </button>
+  )}
+
+</div>
         </div>
       </header>
 
       <div style={G.main}>
-        {!analysis && !loading && <UploadResume onAnalyze={analyzeResume} />}
+        {mode === "recruiter" ? (
+  <RecruiterDashboard />
+) : (
+  !analysis && !loading && <UploadResume onAnalyze={analyzeResume} />
+)}
 
-        {loading && (
+        {mode === "candidate" && loading && (
           <div style={G.loadWrap}>
             <div style={G.loadCard}>
               <div style={{ width: 52, height: 52, border: "3px solid #e2e8f0", borderTopColor: "#2563eb", borderRadius: "50%", animation: "spin 0.75s linear infinite" }} />
@@ -89,7 +130,9 @@ export default function App() {
           </div>
         )}
 
-        {analysis && !loading && <Dashboard data={analysis} />}
+        {mode === "candidate" && analysis && !loading && (
+  <Dashboard data={analysis} />
+)}
       </div>
     </div>
   );

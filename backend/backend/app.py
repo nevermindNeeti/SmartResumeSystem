@@ -1,11 +1,194 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from pymongo import MongoClient
+from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from bson import ObjectId
+import os
+import certifi
 import pdfplumber
 import re
 import io
 
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI")
+
+client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+
+db = client["resume_analyser"]
+
+users_collection = db["users"]
+jobs_collection = db["jobs"]
+candidates_collection = db["candidates"]
+
+print("MongoDB connected successfully!")
+
 app = Flask(__name__)
 CORS(app)
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI")
+
+client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+db = client["resume_analyser"]
+
+users_collection = db["users"]
+jobs_collection = db["jobs"]
+candidates_collection = db["candidates"]
+
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+jwt = JWTManager(app)
+
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+jwt = JWTManager(app)
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.get_json()
+
+    name = data.get("name")
+    email = data.get("email")
+    password = data.get("password")
+    role = data.get("role", "recruiter")
+
+    if not name or not email or not password:
+        return jsonify({
+            "error": "Name, email and password are required"
+        }), 400
+
+    email = email.lower().strip()
+
+    existing_user = users_collection.find_one({"email": email})
+
+    if existing_user:
+        return jsonify({
+            "error": "User with this email already exists"
+        }), 409
+
+    password_hash = generate_password_hash(password)
+
+    user = {
+        "name": name,
+        "email": email,
+        "password_hash": password_hash,
+        "role": role
+    }
+
+    users_collection.insert_one(user)
+
+    return jsonify({
+        "message": "Registration successful",
+        "name": name,
+        "email": email,
+        "role": role
+    }), 201
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json()
+
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({
+            "error": "Email and password are required"
+        }), 400
+
+    email = email.lower().strip()
+
+    user = users_collection.find_one({
+        "email": email
+    })
+
+    if not user:
+        return jsonify({
+            "error": "Invalid email or password"
+        }), 401
+
+    if not check_password_hash(user["password_hash"], password):
+        return jsonify({
+            "error": "Invalid email or password"
+        }), 401
+
+    access_token = create_access_token(
+        identity=str(user["_id"])
+    )
+
+    return jsonify({
+        "message": "Login successful",
+        "access_token": access_token,
+        "name": user["name"],
+        "email": user["email"],
+        "role": user.get("role", "recruiter")
+    }), 200
+
+
+@app.route("/jobs", methods=["GET"])
+@jwt_required()
+def get_jobs():
+    recruiter_id = get_jwt_identity()
+
+    jobs = list(jobs_collection.find(
+        {"recruiter_id": recruiter_id},
+        {"_id": 1, "title": 1, "company": 1, "description": 1,
+         "required_skills": 1, "experience": 1, "domain": 1}
+    ))
+
+    for job in jobs:
+        job["job_id"] = str(job.pop("_id"))
+
+    return jsonify({
+        "jobs": jobs
+    }), 200
+
+@app.route("/jobs/<job_id>", methods=["PUT"])
+@jwt_required()
+def update_job(job_id):
+    data = request.get_json()
+    recruiter_id = get_jwt_identity()
+
+    allowed_fields = [
+        "title",
+        "company",
+        "description",
+        "required_skills",
+        "experience",
+        "domain"
+    ]
+
+    updates = {}
+
+    for field in allowed_fields:
+        if field in data:
+            updates[field] = data[field]
+
+    if not updates:
+        return jsonify({
+            "error": "No valid fields provided for update"
+        }), 400
+
+    result = jobs_collection.update_one(
+        {
+            "_id": ObjectId(job_id),
+            "recruiter_id": recruiter_id
+        },
+        {
+            "$set": updates
+        }
+    )
+
+    if result.matched_count == 0:
+        return jsonify({
+            "error": "Job not found or you are not authorized to update it"
+        }), 404
+
+    return jsonify({
+        "message": "Job updated successfully"
+    }), 200
 
 SKILLS_DB = {
     "programming": ["python", "javascript", "java", "c++", "c#", "typescript", "ruby", "go", "rust", "swift", "kotlin", "php", "scala", "r", "matlab", "dart"],
@@ -233,6 +416,207 @@ def analyze_resume():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ============================================================
+# CANDIDATE LIST / UPLOAD API
+# ============================================================
+
+@app.route("/jobs/<job_id>/candidates", methods=["GET"])
+@jwt_required()
+def get_candidates(job_id):
+    recruiter_id = get_jwt_identity()
+
+    job = jobs_collection.find_one(
+        {
+            "_id": ObjectId(job_id),
+            "recruiter_id": recruiter_id
+        }
+    )
+
+    if not job:
+        return jsonify({
+            "error": "Job not found or you are not authorized to access it"
+        }), 404
+
+    candidates = list(candidates_collection.find(
+        {
+            "recruiter_id": recruiter_id,
+            "job_id": job_id
+        }
+    ))
+
+    for candidate in candidates:
+        candidate["candidate_id"] = str(candidate.pop("_id"))
+
+    return jsonify({
+        "job_id": job_id,
+        "candidates": candidates
+    }), 200
+
+
+@app.route("/jobs/<job_id>/candidates", methods=["POST"])
+@jwt_required()
+def upload_candidate(job_id):
+    recruiter_id = get_jwt_identity()
+
+    job = jobs_collection.find_one(
+        {
+            "_id": ObjectId(job_id),
+            "recruiter_id": recruiter_id
+        }
+    )
+
+    if not job:
+        return jsonify({
+            "error": "Job not found or you are not authorized to access it"
+        }), 404
+
+    if "resume" not in request.files:
+        return jsonify({
+            "error": "No resume file uploaded"
+        }), 400
+
+    file = request.files["resume"]
+
+    if not file.filename.lower().endswith(".pdf"):
+        return jsonify({
+            "error": "Only PDF resumes are supported"
+        }), 400
+
+    try:
+        file_bytes = file.read()
+
+        if not file_bytes:
+            return jsonify({
+                "error": "Uploaded resume is empty"
+            }), 400
+
+        text = extract_text(file_bytes)
+
+        if not text.strip():
+            return jsonify({
+                "error": "Could not extract text. Ensure it is not a scanned image PDF."
+            }), 400
+
+        skills_found, missing_skills, skills_by_category = detect_skills(text)
+        sections = check_sections(text)
+        achievements = check_achievements(text)
+        repetitions = check_repetition(text)
+        score, breakdown = calculate_score(
+            sections,
+            skills_found,
+            achievements,
+            repetitions
+        )
+
+        required_skills = job.get("required_skills", [])
+        text_lower = text.lower()
+
+        matched_job_skills = [
+            skill for skill in required_skills
+            if skill.lower() in text_lower
+        ]
+
+        missing_job_skills = [
+            skill for skill in required_skills
+            if skill.lower() not in text_lower
+        ]
+
+        if required_skills:
+            job_match_score = round(
+                (len(matched_job_skills) / len(required_skills)) * 100,
+                2
+            )
+        else:
+            job_match_score = 0
+
+        candidate = {
+            "recruiter_id": recruiter_id,
+            "job_id": job_id,
+            "resume_filename": file.filename,
+            "resume_score": score,
+            "job_match_score": job_match_score,
+            "skills_found": skills_found,
+            "skills_by_category": skills_by_category,
+            "missing_skills": missing_skills,
+            "matched_job_skills": matched_job_skills,
+            "missing_job_skills": missing_job_skills,
+            "sections": sections,
+            "achievements": achievements,
+            "repetitions": repetitions,
+            "word_count": len(text.split()),
+            "status": "Applied"
+        }
+
+        result = candidates_collection.insert_one(candidate)
+
+        return jsonify({
+            "message": "Candidate resume uploaded and analyzed successfully",
+            "candidate_id": str(result.inserted_id),
+            "job_id": job_id,
+            "resume_filename": file.filename,
+            "resume_score": score,
+            "job_match_score": job_match_score,
+            "skills_found": skills_found,
+            "matched_job_skills": matched_job_skills,
+            "missing_job_skills": missing_job_skills,
+            "status": "Applied"
+        }), 201
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+# ============================================================
+# UPDATE CANDIDATE STATUS API
+# ============================================================
+
+@app.route("/candidates/<candidate_id>/status", methods=["PUT"])
+@jwt_required()
+def update_candidate_status(candidate_id):
+
+    recruiter_id = get_jwt_identity()
+
+    data = request.get_json()
+    new_status = data.get("status")
+
+    allowed_statuses = [
+        "Applied",
+        "Screening",
+        "Shortlisted",
+        "Interview",
+        "Selected",
+        "Rejected"
+    ]
+
+    if new_status not in allowed_statuses:
+        return jsonify({
+            "error": "Invalid status",
+            "allowed_statuses": allowed_statuses
+        }), 400
+
+    result = candidates_collection.update_one(
+        {
+            "_id": ObjectId(candidate_id),
+            "recruiter_id": recruiter_id
+        },
+        {
+            "$set": {
+                "status": new_status
+            }
+        }
+    )
+
+    if result.matched_count == 0:
+        return jsonify({
+            "error": "Candidate not found or you are not authorized to update this candidate"
+        }), 404
+
+    return jsonify({
+        "message": "Candidate status updated successfully",
+        "candidate_id": candidate_id,
+        "status": new_status
+    }), 200
 
 @app.route("/", methods=["GET"])
 def health():
@@ -241,3 +625,4 @@ def health():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+

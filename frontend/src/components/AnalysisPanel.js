@@ -1,15 +1,5 @@
 import React, { useState } from "react";
 
-function SkillBar({ skill, delay }) {
-  return (
-    <span style={{
-      padding: "5px 12px", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 500,
-      background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe",
-      display: "inline-block", animation: `fadeUp 0.4s ${delay}s ease both`
-    }}>{skill}</span>
-  );
-}
-
 function SectionRow({ icon, label, present, tips }) {
   const [open, setOpen] = useState(false);
   return (
