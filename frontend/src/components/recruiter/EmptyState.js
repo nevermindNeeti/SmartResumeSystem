@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../ui";
 
 export default function EmptyState({
   title,
@@ -7,22 +8,19 @@ export default function EmptyState({
   onAction,
 }) {
   return (
-    <div className="rd-empty">
-      <div className="rd-empty-title">
+    <div className="bg-white border border-dashed border-ink-300 rounded-lg px-6 py-11 text-center">
+      <div className="text-ink-700 text-base font-bold">
         {title}
       </div>
 
-      <div className="rd-empty-subtitle">
+      <div className="text-ink-400 text-xs my-1.5 mb-4">
         {subtitle}
       </div>
 
       {actionLabel && (
-        <button
-          className="rd-btn-primary"
-          onClick={onAction}
-        >
+        <Button variant="primary" onClick={onAction}>
           {actionLabel}
-        </button>
+        </Button>
       )}
     </div>
   );

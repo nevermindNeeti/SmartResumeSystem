@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { FiBriefcase, FiUsers, FiStar, FiCalendar } from "react-icons/fi";
 import { recruiterApi } from "../../services/RecruiterApi";
 import StatCard from "./StatCard";
 import { SkeletonCard } from "./Skeleton";
@@ -50,7 +51,7 @@ export default function Overview({ jobs, jobsLoading }) {
 
   if (jobsLoading || loading) {
     return (
-      <div className="rd-stats-grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
         {[1, 2, 3, 4].map((i) => (
           <SkeletonCard key={i} />
         ))}
@@ -83,30 +84,30 @@ export default function Overview({ jobs, jobsLoading }) {
   ).length;
 
   return (
-    <div className="rd-stats-grid">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
 
       <StatCard
         label="Total Jobs"
         value={jobs.length}
-        icon="💼"
+        icon={<FiBriefcase size={20} />}
       />
 
       <StatCard
         label="Total Candidates"
         value={totalCandidates}
-        icon="👥"
+        icon={<FiUsers size={20} />}
       />
 
       <StatCard
         label="Shortlisted"
         value={shortlisted}
-        icon="⭐"
+        icon={<FiStar size={20} />}
       />
 
       <StatCard
         label="Interviews"
         value={interviews}
-        icon="🗓️"
+        icon={<FiCalendar size={20} />}
       />
 
     </div>

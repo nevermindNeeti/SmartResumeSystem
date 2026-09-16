@@ -8,8 +8,7 @@ import JobDetail from "../components/recruiter/JobDetail";
 import Analytics from "../components/recruiter/Analytics";
 
 import { recruiterApi } from "../services/RecruiterApi";
-
-import "../components/recruiter/recruiter.css";
+import { Card, Button, Input } from "../components/ui";
 
 export default function RecruiterDashboard() {
   // --------------------------------------------------
@@ -136,73 +135,75 @@ export default function RecruiterDashboard() {
 
   if (!loggedIn) {
     return (
-      <div style={styles.page}>
-        <div style={styles.card}>
+      <div className="fixed inset-0 top-16 overflow-y-auto bg-ink-100 flex justify-center items-center font-body p-6">
+        <Card padding="none" rounded="2xl" shadow="raised" className="w-full max-w-[430px] px-10 py-[42px]">
 
-          <div style={styles.logoArea}>
-            <div style={styles.logoDot}></div>
+          <div className="flex items-center gap-2.5 font-display text-xl font-bold text-ink-900 mb-9">
+            <div className="w-[11px] h-[11px] rounded-full bg-[linear-gradient(135deg,#2563eb,#0ea5e9)]" />
             <span>Resume Analyser</span>
           </div>
 
-          <div style={styles.headingArea}>
-            <h1 style={styles.headingAreaH1}>
+          <div className="mb-7">
+            <h1 className="font-display text-[30px] font-bold mb-2 text-ink-900">
               Recruiter Portal
             </h1>
 
-            <p style={styles.headingAreaP}>
+            <p className="text-ink-500 text-sm">
               Sign in to manage jobs and screen candidates.
             </p>
           </div>
 
           <form onSubmit={handleLogin}>
 
-            <label style={styles.label}>
+            <label className="block text-[13px] font-semibold text-ink-700 mb-1.5 mt-[18px]">
               Email
             </label>
 
-            <input
+            <Input
               type="email"
+              size="lg"
               placeholder="Recruiter email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={styles.input}
             />
 
-            <label style={styles.label}>
+            <label className="block text-[13px] font-semibold text-ink-700 mb-1.5 mt-[18px]">
               Password
             </label>
 
-            <input
+            <Input
               type="password"
+              size="lg"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={styles.input}
             />
 
             {loginError && (
-              <div style={styles.error}>
+              <div className="mt-4 px-3 py-2.5 bg-red-50 text-red-600 rounded-lg text-[13px]">
                 {loginError}
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
+              variant="primary"
+              size="xl"
               disabled={loginLoading}
-              style={styles.button}
+              className="w-full mt-6 justify-center"
             >
               {loginLoading ? "Signing in..." : "Sign In"}
-            </button>
+            </Button>
 
           </form>
 
-          <p style={styles.footer}>
+          <p className="text-center text-ink-400 text-xs mt-7">
             Recruiter & HR Candidate Screening System
           </p>
 
-        </div>
+        </Card>
       </div>
     );
   }
@@ -212,7 +213,7 @@ export default function RecruiterDashboard() {
   // --------------------------------------------------
 
   return (
-    <div className="rd-recruiter-shell">
+    <div className="min-h-screen flex flex-col md:flex-row bg-ink-100 text-ink-900 font-body">
 
       <Sidebar
         activeView={activeView}
@@ -220,11 +221,11 @@ export default function RecruiterDashboard() {
         onLogout={handleLogout}
       />
 
-      <div className="rd-main">
+      <div className="flex-1 min-w-0">
 
         <Topbar />
 
-        <main className="rd-content">
+        <main className="p-5 md:p-8 max-w-[1500px] mx-auto">
 
           {activeView === "overview" && (
             <Overview
@@ -271,12 +272,12 @@ export default function RecruiterDashboard() {
           )}
 
           {activeView === "settings" && (
-            <div className="rd-panel">
-              <h2>Settings</h2>
-              <p className="rd-text-muted">
+            <Card padding="lg">
+              <h2 className="font-display text-xl font-bold text-ink-900 mb-2">Settings</h2>
+              <p className="text-ink-400 text-xs">
                 Recruiter settings will be available here.
               </p>
-            </div>
+            </Card>
           )}
 
         </main>
@@ -286,109 +287,4 @@ export default function RecruiterDashboard() {
     </div>
   );
 }
-
-// --------------------------------------------------
-// LOGIN PAGE STYLES
-// --------------------------------------------------
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#f0f2f5",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontFamily: "'Outfit', sans-serif",
-    padding: "24px",
-  },
-
-  card: {
-    width: "100%",
-    maxWidth: "430px",
-    background: "#ffffff",
-    borderRadius: "20px",
-    padding: "42px",
-    boxShadow: "0 10px 40px rgba(15, 23, 42, 0.10)",
-  },
-
-  logoArea: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "20px",
-    fontWeight: "700",
-    color: "#0f172a",
-    marginBottom: "38px",
-  },
-
-  logoDot: {
-    width: "11px",
-    height: "11px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #2563eb, #0ea5e9)",
-  },
-
-  headingArea: {
-    marginBottom: "28px",
-  },
-
-  headingAreaH1: {
-    fontSize: "30px",
-    marginBottom: "8px",
-    color: "#0f172a",
-  },
-
-  headingAreaP: {
-    color: "#64748b",
-    fontSize: "14px",
-  },
-
-  label: {
-    display: "block",
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#334155",
-    marginBottom: "7px",
-    marginTop: "18px",
-  },
-
-  input: {
-    width: "100%",
-    padding: "13px 14px",
-    border: "1px solid #cbd5e1",
-    borderRadius: "9px",
-    fontSize: "14px",
-    outline: "none",
-  },
-
-  button: {
-    width: "100%",
-    marginTop: "26px",
-    padding: "14px",
-    border: "none",
-    borderRadius: "9px",
-    background: "#2563eb",
-    color: "#ffffff",
-    fontSize: "15px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-
-  error: {
-    marginTop: "16px",
-    padding: "10px 12px",
-    background: "#fef2f2",
-    color: "#dc2626",
-    borderRadius: "8px",
-    fontSize: "13px",
-  },
-
-  footer: {
-    textAlign: "center",
-    color: "#94a3b8",
-    fontSize: "12px",
-    marginTop: "28px",
-  },
-};
 

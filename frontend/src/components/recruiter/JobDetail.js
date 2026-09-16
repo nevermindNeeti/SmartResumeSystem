@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { FiArrowLeft } from "react-icons/fi";
 import { recruiterApi } from "../../services/RecruiterApi";
-import FilterBar from "./FilterBar"; 
+import { Card } from "../ui";
+import FilterBar from "./FilterBar";
 import CandidateTable from "./CandidateTable";
 import CandidateDrawer from "./CandidateDrawer";
 import UploadResumes from "./UploadResumes";
@@ -129,19 +131,19 @@ export default function JobDetail({ job, onBack }) {
   }
 
   return (
-    <div className="rd-job-detail">
+    <div className="w-full">
       <button
-        className="rd-back-btn"
+        className="border-0 bg-transparent text-ink-500 p-0 mb-[18px] text-xs cursor-pointer flex items-center gap-1.5 hover:text-ink-900"
         onClick={onBack}
       >
-        ← Back to Jobs
+        <FiArrowLeft size={14} /> Back to Jobs
       </button>
 
-      <div className="rd-job-detail-header">
+      <div className="flex items-center justify-between gap-5 mb-5 flex-col items-start sm:flex-row sm:items-center">
         <div>
-          <h2>{job.title}</h2>
+          <h2 className="font-display text-2xl font-bold text-ink-900 m-0">{job.title}</h2>
 
-          <div className="rd-text-muted">
+          <div className="text-ink-400 text-xs mt-1">
             {job.company}
             {job.domain
               ? ` • ${job.domain}`
@@ -152,60 +154,60 @@ export default function JobDetail({ job, onBack }) {
           </div>
         </div>
 
-        <div className="rd-job-detail-count">
+        <div className="px-3.5 py-2.5 bg-white border border-ink-200 rounded-lg text-ink-600 text-xs font-semibold">
           {candidates.length} applicants
         </div>
       </div>
 
-      <div className="rd-job-description">
-        <h4>Job Description</h4>
+      <Card padding="sm" rounded="lg" className="mb-3.5">
+        <h4 className="m-0 mb-2.5 text-[13px] text-ink-700">Job Description</h4>
 
-        <p>
+        <p className="text-ink-400 text-xs leading-relaxed m-0">
           {job.description ||
             "No job description available."}
         </p>
-      </div>
+      </Card>
 
-      <div className="rd-job-required">
-        <h4>Required Skills</h4>
+      <Card padding="sm" rounded="lg" className="mb-3.5">
+        <h4 className="m-0 mb-2.5 text-[13px] text-ink-700">Required Skills</h4>
 
-        <div className="rd-job-skills">
+        <div className="flex flex-wrap gap-1.5">
           {(job.required_skills || []).map(
             (skill) => (
               <span
                 key={skill}
-                className="rd-skill-chip"
+                className="inline-flex items-center px-2 py-1 bg-ink-100 text-ink-600 rounded-md text-[11px]"
               >
                 {skill}
               </span>
             )
           )}
         </div>
-      </div>
+      </Card>
 
       <UploadResumes
         job={job}
         onUploadComplete={loadCandidates}
       />
 
-      <div className="rd-candidates-section">
-        <div className="rd-section-header">
+      <div>
+        <div className="flex items-center justify-between gap-4 mb-5">
           <div>
-            <h2>Candidates</h2>
+            <h2 className="font-display text-xl font-bold text-ink-900 m-0">Candidates</h2>
 
-            <div className="rd-text-muted">
+            <div className="text-ink-400 text-xs mt-1">
               Ranked by job match score
             </div>
           </div>
         </div>
 
         <FilterBar
-  filters={filters}
-  onChange={setFilters}
-/>
+          filters={filters}
+          onChange={setFilters}
+        />
 
         {loading ? (
-          <div className="rd-table-container">
+          <div className="w-full bg-white border border-ink-200 rounded-lg">
             {[1, 2, 3, 4].map((i) => (
               <SkeletonRow key={i} />
             ))}
@@ -216,12 +218,12 @@ export default function JobDetail({ job, onBack }) {
             onRetry={loadCandidates}
           />
         ) : filteredCandidates.length === 0 ? (
-          <div className="rd-empty">
-            <div className="rd-empty-title">
+          <div className="bg-white border border-dashed border-ink-300 rounded-lg px-6 py-11 text-center">
+            <div className="text-ink-700 text-base font-bold">
               No candidates found
             </div>
 
-            <div className="rd-empty-subtitle">
+            <div className="text-ink-400 text-xs mt-1.5">
               Upload resumes or change your filters.
             </div>
           </div>

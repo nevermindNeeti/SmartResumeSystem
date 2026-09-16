@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { FiUsers, FiTarget, FiFileText, FiStar } from "react-icons/fi";
 import { recruiterApi } from "../../services/RecruiterApi";
 import StatCard from "./StatCard";
 import ErrorState from "./ErrorState";
 import { SkeletonCard } from "./Skeleton";
+import { Card } from "../ui";
 
 const STATUSES = [
   "Applied",
@@ -105,7 +107,7 @@ export default function Analytics({ jobs }) {
 
   if (loading) {
     return (
-      <div className="rd-stats-grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
         {[1, 2, 3, 4].map((i) => (
           <SkeletonCard key={i} />
         ))}
@@ -123,34 +125,34 @@ export default function Analytics({ jobs }) {
   }
 
   return (
-    <div className="rd-analytics">
-      <div className="rd-section-header">
+    <div>
+      <div className="flex items-center justify-between gap-4 mb-5">
         <div>
-          <h2>Analytics</h2>
-          <div className="rd-text-muted">
+          <h2 className="font-display text-xl font-bold text-ink-900 m-0">Analytics</h2>
+          <div className="text-ink-400 text-xs mt-1">
             Recruitment pipeline and candidate
             performance overview
           </div>
         </div>
       </div>
 
-      <div className="rd-stats-grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
         <StatCard
           label="Total Candidates"
           value={analytics.total}
-          icon="👥"
+          icon={<FiUsers size={20} />}
         />
 
         <StatCard
           label="Average Job Match"
           value={`${analytics.averageMatch}%`}
-          icon="🎯"
+          icon={<FiTarget size={20} />}
         />
 
         <StatCard
           label="Average Resume Score"
           value={analytics.averageResumeScore}
-          icon="📄"
+          icon={<FiFileText size={20} />}
         />
 
         <StatCard
@@ -158,16 +160,16 @@ export default function Analytics({ jobs }) {
           value={
             analytics.statusCounts.Shortlisted
           }
-          icon="⭐"
+          icon={<FiStar size={20} />}
         />
       </div>
 
-      <div className="rd-analytics-card">
-        <div className="rd-analytics-card-header">
-          <h3>Candidate Pipeline</h3>
+      <Card padding="sm" className="mt-5">
+        <div className="mb-5">
+          <h3 className="text-ink-900 text-[15px] font-bold m-0">Candidate Pipeline</h3>
         </div>
 
-        <div className="rd-pipeline">
+        <div>
           {STATUSES.map((status) => {
             const count =
               analytics.statusCounts[status];
@@ -183,38 +185,38 @@ export default function Analytics({ jobs }) {
             return (
               <div
                 key={status}
-                className="rd-pipeline-row"
+                className="grid grid-cols-[100px_1fr_45px] items-center gap-3 mb-3.5"
               >
-                <div className="rd-pipeline-label">
+                <div className="flex justify-between gap-2 text-ink-600 text-[11px]">
                   <span>{status}</span>
-                  <strong>{count}</strong>
+                  <strong className="text-ink-900">{count}</strong>
                 </div>
 
-                <div className="rd-pipeline-bar-bg">
+                <div className="h-[7px] bg-ink-100 rounded-pill overflow-hidden">
                   <div
-                    className="rd-pipeline-bar"
+                    className="h-full bg-brand-600 rounded-pill"
                     style={{
                       width: `${percentage}%`,
                     }}
                   />
                 </div>
 
-                <div className="rd-pipeline-percent">
+                <div className="text-right text-ink-400 text-[11px]">
                   {percentage}%
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
 
-      <div className="rd-analytics-card">
-        <div className="rd-analytics-card-header">
-          <h3>Jobs Overview</h3>
+      <Card padding="sm" className="mt-5">
+        <div className="mb-5">
+          <h3 className="text-ink-900 text-[15px] font-bold m-0">Jobs Overview</h3>
         </div>
 
         {jobs && jobs.length > 0 ? (
-          <div className="rd-job-analytics-list">
+          <div className="flex flex-col">
             {jobs.map((job) => {
               const jobCandidates =
                 candidates.filter(
@@ -241,17 +243,17 @@ export default function Analytics({ jobs }) {
               return (
                 <div
                   key={job.job_id}
-                  className="rd-job-analytics-row"
+                  className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-2.5 sm:gap-5 py-3.5 border-b border-ink-100 last:border-b-0 text-xs"
                 >
                   <div>
-                    <strong>{job.title}</strong>
-                    <div className="rd-text-muted">
+                    <strong className="block text-ink-700">{job.title}</strong>
+                    <div className="text-ink-400 text-[11px]">
                       {job.company}
                     </div>
                   </div>
 
-                  <div>
-                    <span className="rd-text-muted">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-ink-400 text-[11px]">
                       Candidates
                     </span>
                     <strong>
@@ -259,8 +261,8 @@ export default function Analytics({ jobs }) {
                     </strong>
                   </div>
 
-                  <div>
-                    <span className="rd-text-muted">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-ink-400 text-[11px]">
                       Avg. Match
                     </span>
                     <strong>
@@ -272,11 +274,11 @@ export default function Analytics({ jobs }) {
             })}
           </div>
         ) : (
-          <div className="rd-text-muted">
+          <div className="text-ink-400 text-[11px]">
             No jobs available yet.
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

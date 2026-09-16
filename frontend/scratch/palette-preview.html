@@ -1,0 +1,313 @@
+<title>Resume Analyser Palettes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page-bg:#F3F5F7;
+    --chrome-surface:#FFFFFF;
+    --chrome-border:#DFE4E8;
+    --chrome-text:#1B2126;
+    --chrome-muted:#71808A;
+    --chrome-accent:#283044;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page-bg);
+    color:var(--chrome-text);
+    font-family:'Ubuntu',sans-serif;
+    padding:48px 24px 72px;
+  }
+
+  .wrap{max-width:1100px;margin:0 auto;}
+
+  header.intro{max-width:680px;margin-bottom:40px;}
+  header.intro .eyebrow{
+    display:block;font-size:11px;font-weight:700;letter-spacing:0.14em;
+    text-transform:uppercase;color:var(--chrome-accent);margin-bottom:10px;
+  }
+  header.intro h1{margin:0 0 10px;font-size:clamp(1.6rem,3vw,2.1rem);font-weight:700;letter-spacing:-0.01em;text-wrap:balance;}
+  header.intro p{margin:0 0 14px;color:var(--chrome-muted);font-size:0.95rem;line-height:1.6;}
+  header.intro p:last-child{margin-bottom:0;}
+
+  .source-swatches{display:flex;gap:14px;flex-wrap:wrap;}
+  .source-swatches div{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .source-swatches .sw{width:40px;height:40px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);}
+  .source-swatches code{font-size:0.68rem;color:var(--chrome-muted);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:28px;
+  }
+
+  .palette{
+    background:var(--chrome-surface);
+    border:1px solid var(--chrome-border);
+    border-radius:16px;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    position:relative;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .palette{transition:box-shadow .2s ease, transform .2s ease;}
+    .palette:hover{box-shadow:0 10px 28px rgba(27,33,38,0.08); transform:translateY(-2px);}
+  }
+
+  .palette h2{margin:0;font-size:1.05rem;font-weight:700;letter-spacing:-0.01em;}
+  .palette .rationale{margin:4px 0 0;font-size:0.82rem;color:var(--chrome-muted);line-height:1.55;}
+
+  .pick{
+    position:absolute;top:16px;right:16px;
+    width:28px;height:28px;border-radius:50%;
+    border:1.5px solid var(--chrome-border);
+    background:var(--chrome-surface);
+    color:transparent;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;line-height:1;
+  }
+  .pick:focus-visible{outline:2px solid var(--chrome-accent); outline-offset:2px;}
+  .palette.selected .pick{background:var(--chrome-accent);border-color:var(--chrome-accent);color:#fff;}
+  .palette.selected{border-color:var(--chrome-accent); box-shadow:0 0 0 2px var(--chrome-accent);}
+
+  /* ---- the mock app preview ---- */
+  .mock{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .mock-topbar{
+    display:flex;align-items:center;gap:8px;
+    padding:12px 14px;
+    background:var(--primary);
+  }
+  .mock.flat .mock-topbar{border-bottom:1px solid var(--border);}
+  .mock.flat .mock-bar.pri > i{background:var(--chip);}
+  .mock.mauve .mock-navpill{background:var(--surface);color:var(--primary);}
+  .mock-dot{width:9px;height:9px;border-radius:50%;background:var(--chip);flex-shrink:0;}
+  .mock-brand{font-weight:700;font-size:0.85rem;color:var(--primary-ink);margin-right:auto;}
+  .mock-navpill{
+    font-size:0.68rem;font-weight:700;padding:5px 10px;border-radius:999px;
+    background:var(--chip);color:var(--chip-ink);
+  }
+
+  .mock-body{padding:16px;display:flex;flex-direction:column;gap:14px;}
+
+  .mock-score-row{display:flex;align-items:center;gap:12px;}
+  .mock-ring{flex-shrink:0;}
+  .mock-ring text{font-family:'Ubuntu',sans-serif;font-weight:700;fill:var(--text);}
+  .mock-grade-pill{
+    display:inline-block;font-size:0.72rem;font-weight:700;
+    padding:3px 10px;border-radius:999px;margin-bottom:5px;
+    background:var(--chip);color:var(--chip-ink);
+  }
+  .mock-grade-label{margin:0;font-size:0.72rem;color:var(--muted);}
+
+  .mock-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .mock-stats div{background:var(--surface-sunken);border-radius:8px;padding:8px 6px;text-align:center;}
+  .mock-stats strong{display:block;font-size:1rem;font-variant-numeric:tabular-nums;color:var(--text);}
+  .mock-stats span{font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;}
+
+  .mock-bar{height:6px;border-radius:999px;background:var(--surface-sunken);overflow:hidden;}
+  .mock-bar > i{display:block;height:100%;border-radius:999px;}
+  .mock-bar.pri > i{background:var(--primary);}
+  .mock-bar.acc > i{background:var(--accent);}
+
+  .mock-actions{display:flex;gap:8px;}
+  .mock-actions button{
+    font-family:inherit;font-size:0.72rem;font-weight:700;
+    border-radius:8px;padding:8px 12px;cursor:default;
+    border:1.5px solid transparent;
+  }
+  .btn-primary{background:var(--primary);color:var(--primary-ink);}
+  .btn-secondary{background:var(--surface);border-color:var(--accent) !important;color:var(--accent);}
+
+  .swatches{list-style:none;margin:0;padding:0;display:flex;gap:12px;flex-wrap:wrap;}
+  .swatches li{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:0.62rem;color:var(--chrome-muted);}
+  .chip{width:26px;height:26px;border-radius:7px;border:1px solid var(--chrome-border);}
+  .swatches .role{font-weight:700;color:var(--chrome-text);}
+  .swatches code{font-size:0.58rem;}
+
+  footer.note{max-width:680px;margin:44px auto 0;font-size:0.82rem;color:var(--chrome-muted);line-height:1.6;text-align:center;}
+
+  @media (max-width:420px){body{padding:36px 16px 56px;}}
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">Design proposal · v8</span>
+    <h1>Three themes from your umber &amp; mauve palette</h1>
+    <p>Only three colours this time — a dark umber-brown, a warm ivory, and a dusty mauve-rose. With just one dark, one light and one mid tone, "rotating the lead" means something different here: the same three colours, but three different levels of boldness — from a full colour-block header down to a quiet, minimal one where colour only shows up in the details.</p>
+    <div class="source-swatches">
+      <div><span class="sw" style="background:#453823"></span><code>453823</code></div>
+      <div><span class="sw" style="background:#F3EFE0"></span><code>F3EFE0</code></div>
+      <div><span class="sw" style="background:#9D8189"></span><code>9D8189</code></div>
+    </div>
+  </header>
+
+  <div class="grid" id="grid">
+
+    <!-- A: Umber Bold -->
+    <article class="palette" data-name="Umber Bold">
+      <button class="pick" aria-label="Mark Umber Bold as favourite" aria-pressed="false">✓</button>
+      <div>
+        <h2>Umber Bold</h2>
+        <p class="rationale">The most direct read — dark umber runs the header and buttons, mauve is the accent, ivory holds the surface.</p>
+      </div>
+
+      <div class="mock" style="--primary:#453823; --primary-ink:#F3EFE0; --accent:#9D8189; --chip:#9D8189; --chip-ink:#453823; --surface:#F3EFE0; --surface-sunken:#E8E1CC; --border:#DED2B8; --text:#453823; --muted:#9D8189;">
+        <div class="mock-topbar">
+          <span class="mock-dot"></span>
+          <span class="mock-brand">Resume Analyser</span>
+          <span class="mock-navpill">Recruiter Portal</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-score-row">
+            <svg class="mock-ring" width="56" height="56" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="23" fill="none" stroke="#DED2B8" stroke-width="6"/>
+              <circle cx="28" cy="28" r="23" fill="none" stroke="#9D8189" stroke-width="6" stroke-linecap="round" stroke-dasharray="122 144.5" transform="rotate(-90 28 28)"/>
+              <text x="28" y="32" font-size="15" text-anchor="middle">85</text>
+            </svg>
+            <div>
+              <span class="mock-grade-pill">Grade A</span>
+              <p class="mock-grade-label">Excellent · Resume Score</p>
+            </div>
+          </div>
+          <div class="mock-stats">
+            <div><strong>12</strong><span>Skills</span></div>
+            <div><strong>6/7</strong><span>Sections</span></div>
+            <div><strong>420</strong><span>Words</span></div>
+          </div>
+          <div class="mock-bar pri"><i style="width:82%"></i></div>
+          <div class="mock-bar acc"><i style="width:68%"></i></div>
+          <div class="mock-actions">
+            <button class="btn-primary">Analyse Resume</button>
+            <button class="btn-secondary">New Analysis</button>
+          </div>
+        </div>
+      </div>
+
+      <ul class="swatches">
+        <li><span class="chip" style="background:#453823"></span><span class="role">Primary</span><code>#453823</code></li>
+        <li><span class="chip" style="background:#9D8189"></span><span class="role">Accent</span><code>#9D8189</code></li>
+        <li><span class="chip" style="background:#F3EFE0"></span><span class="role">Surface</span><code>#F3EFE0</code></li>
+      </ul>
+    </article>
+
+    <!-- B: Mauve Forward -->
+    <article class="palette" data-name="Mauve Forward">
+      <button class="pick" aria-label="Mark Mauve Forward as favourite" aria-pressed="false">✓</button>
+      <div>
+        <h2>Mauve Forward</h2>
+        <p class="rationale">Updated per your note — background lightened further, and the header is now a deep, darkened mauve instead of the mid-tone, for real contrast against the lighter surface. Umber stays the bold accent.</p>
+      </div>
+
+      <div class="mock mauve" style="--primary:#5C4249; --primary-ink:#FAF7F0; --accent:#453823; --chip:#453823; --chip-ink:#FAF7F0; --surface:#FAF7F0; --surface-sunken:#F1EBDC; --border:#E6DCC4; --text:#453823; --muted:#9D8189;">
+        <div class="mock-topbar">
+          <span class="mock-dot"></span>
+          <span class="mock-brand">Resume Analyser</span>
+          <span class="mock-navpill">Recruiter Portal</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-score-row">
+            <svg class="mock-ring" width="56" height="56" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="23" fill="none" stroke="#E6DCC4" stroke-width="6"/>
+              <circle cx="28" cy="28" r="23" fill="none" stroke="#453823" stroke-width="6" stroke-linecap="round" stroke-dasharray="112 144.5" transform="rotate(-90 28 28)"/>
+              <text x="28" y="32" font-size="15" text-anchor="middle">78</text>
+            </svg>
+            <div>
+              <span class="mock-grade-pill">Grade B</span>
+              <p class="mock-grade-label">Good · Resume Score</p>
+            </div>
+          </div>
+          <div class="mock-stats">
+            <div><strong>9</strong><span>Skills</span></div>
+            <div><strong>5/7</strong><span>Sections</span></div>
+            <div><strong>380</strong><span>Words</span></div>
+          </div>
+          <div class="mock-bar pri"><i style="width:70%"></i></div>
+          <div class="mock-bar acc"><i style="width:60%"></i></div>
+          <div class="mock-actions">
+            <button class="btn-primary">Analyse Resume</button>
+            <button class="btn-secondary">New Analysis</button>
+          </div>
+        </div>
+      </div>
+
+      <ul class="swatches">
+        <li><span class="chip" style="background:#5C4249"></span><span class="role">Primary</span><code>#5C4249</code></li>
+        <li><span class="chip" style="background:#453823"></span><span class="role">Accent</span><code>#453823</code></li>
+        <li><span class="chip" style="background:#FAF7F0"></span><span class="role">Surface</span><code>#FAF7F0</code></li>
+        <li><span class="chip" style="background:#9D8189"></span><span class="role">Muted</span><code>#9D8189</code></li>
+      </ul>
+    </article>
+
+    <!-- C: Ivory Minimal -->
+    <article class="palette" data-name="Ivory Minimal">
+      <button class="pick" aria-label="Mark Ivory Minimal as favourite" aria-pressed="false">✓</button>
+      <div>
+        <h2>Ivory Minimal</h2>
+        <p class="rationale">No colour-block header at all — just ivory with a hairline border, umber text and a mauve badge doing the only colour work. Quiet.</p>
+      </div>
+
+      <div class="mock flat" style="--primary:#F3EFE0; --primary-ink:#453823; --accent:#453823; --chip:#9D8189; --chip-ink:#F3EFE0; --surface:#F3EFE0; --surface-sunken:#E8E1CC; --border:#DED2B8; --text:#453823; --muted:#9D8189;">
+        <div class="mock-topbar">
+          <span class="mock-dot"></span>
+          <span class="mock-brand">Resume Analyser</span>
+          <span class="mock-navpill">Recruiter Portal</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-score-row">
+            <svg class="mock-ring" width="56" height="56" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="23" fill="none" stroke="#DED2B8" stroke-width="6"/>
+              <circle cx="28" cy="28" r="23" fill="none" stroke="#453823" stroke-width="6" stroke-linecap="round" stroke-dasharray="127 144.5" transform="rotate(-90 28 28)"/>
+              <text x="28" y="32" font-size="15" text-anchor="middle">88</text>
+            </svg>
+            <div>
+              <span class="mock-grade-pill">Grade A</span>
+              <p class="mock-grade-label">Excellent · Resume Score</p>
+            </div>
+          </div>
+          <div class="mock-stats">
+            <div><strong>13</strong><span>Skills</span></div>
+            <div><strong>7/7</strong><span>Sections</span></div>
+            <div><strong>470</strong><span>Words</span></div>
+          </div>
+          <div class="mock-bar pri"><i style="width:85%"></i></div>
+          <div class="mock-bar acc"><i style="width:71%"></i></div>
+          <div class="mock-actions">
+            <button class="btn-primary">Analyse Resume</button>
+            <button class="btn-secondary">New Analysis</button>
+          </div>
+        </div>
+      </div>
+
+      <ul class="swatches">
+        <li><span class="chip" style="background:#F3EFE0"></span><span class="role">Surface</span><code>#F3EFE0</code></li>
+        <li><span class="chip" style="background:#453823"></span><span class="role">Ink/Accent</span><code>#453823</code></li>
+        <li><span class="chip" style="background:#9D8189"></span><span class="role">Tag</span><code>#9D8189</code></li>
+      </ul>
+    </article>
+
+  </div>
+
+  <footer class="note">All three use exactly your three colours, just at different levels of boldness — tell me which one feels right and I'll apply it across the real app.</footer>
+</div>
+
+<script>
+  document.getElementById('grid').addEventListener('click', function(e){
+    var btn = e.target.closest('.pick');
+    if(!btn) return;
+    var card = btn.closest('.palette');
+    var selected = card.classList.toggle('selected');
+    btn.setAttribute('aria-pressed', String(selected));
+  });
+</script>

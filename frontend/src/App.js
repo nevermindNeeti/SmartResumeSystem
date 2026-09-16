@@ -1,28 +1,19 @@
 import React, { useState } from "react";
+import { FiArrowLeft } from "react-icons/fi";
 import UploadResume from "./components/UploadResume";
 import Dashboard from "./components/Dashboard";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
-
-const G = {
-  app: { minHeight: "100vh", background: "#f0f2f5", fontFamily: "'Outfit', sans-serif", color: "#0f172a" },
-  header: { background: "#ffffff", borderBottom: "1px solid #e2e8f0", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" },
-  headerInner: { maxWidth: "1300px", margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" },
-  logo: { display: "flex", alignItems: "center", gap: "10px", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "1.25rem", color: "#0f172a", letterSpacing: "-0.01em" },
-  logoDot: { width: "10px", height: "10px", borderRadius: "50%", background: "linear-gradient(135deg, #2563eb, #0ea5e9)" },
-  badge: { background: "#eff6ff", color: "#2563eb", padding: "4px 12px", borderRadius: "100px", fontSize: "0.75rem", fontWeight: 600, border: "1px solid #bfdbfe" },
-  resetBtn: { background: "white", border: "1px solid #e2e8f0", color: "#64748b", padding: "8px 18px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: 500, display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" },
-  main: { flex: 1, padding: "32px 24px", maxWidth: "1300px", margin: "0 auto", width: "100%" },
-  loadWrap: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "70vh", gap: "20px" },
-  loadCard: { background: "white", borderRadius: "20px", padding: "48px 56px", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" },
-  loadTitle: { fontFamily: "'Playfair Display', serif", fontSize: "1.4rem", fontWeight: 700, color: "#0f172a" },
-  loadSub: { color: "#64748b", fontSize: "0.9rem" },
-};
+import { Button, Badge, Card } from "./components/ui";
 
 export default function App() {
   const [mode, setMode] = useState("candidate");
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
+
+  const isLanding = mode === "candidate" && !analysis && !loading;
+  const isDashboard = mode === "candidate" && !!analysis && !loading;
+  const showModeToggle = isLanding || mode === "recruiter";
 
   const analyzeResume = async (file) => {
     setLoading(true);
@@ -42,98 +33,72 @@ export default function App() {
   };
 
   return (
-    <div style={G.app}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-      <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fillBar { from { width: 0; } to { width: var(--w); } }
-        @keyframes drawCircle { from { stroke-dasharray: 0 339; } to { stroke-dasharray: var(--dash) 339; } }
-        .fade-up { animation: fadeUp 0.5s ease forwards; }
-        .fade-up-1 { animation: fadeUp 0.5s 0.1s ease both; }
-        .fade-up-2 { animation: fadeUp 0.5s 0.2s ease both; }
-        .fade-up-3 { animation: fadeUp 0.5s 0.3s ease both; }
-        .fade-up-4 { animation: fadeUp 0.5s 0.4s ease both; }
-        button:hover { opacity: 0.88; }
-      `}</style>
-
-      <header style={G.header}>
-        <div style={G.headerInner}>
-          <div style={G.logo}>
-            <div style={G.logoDot} />
+    <div className="min-h-screen bg-ink-100 font-body text-ink-900">
+      <header className="bg-white border-b border-ink-200 h-16 px-10 flex items-center sticky top-0 z-50 shadow-card">
+        <div className="max-w-[1300px] mx-auto w-full flex items-center justify-between">
+          <div className="flex items-center gap-2.5 font-display font-bold text-xl text-ink-900 tracking-tight">
+            <div className="w-2.5 h-2.5 rounded-full bg-[linear-gradient(135deg,#2563eb,#0ea5e9)]" />
             Resume Analyser
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
 
-        <button
-        style={{
-      ...G.resetBtn,
-      background: mode === "candidate" ? "#eff6ff" : "white",
-      color: mode === "candidate" ? "#2563eb" : "#64748b",
-      borderColor: mode === "candidate" ? "#bfdbfe" : "#e2e8f0",
-    }}
-    onClick={() => setMode("candidate")}
-  >
-    Resume Analyser
-  </button>
+          <div className="flex items-center gap-2.5">
+            {showModeToggle && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setMode(mode === "candidate" ? "recruiter" : "candidate")}
+              >
+                {mode === "candidate" ? "Recruiter Portal" : "Resume Analyser"}
+              </Button>
+            )}
 
-  <button
-    style={{
-      ...G.resetBtn,
-      background: mode === "recruiter" ? "#eff6ff" : "white",
-      color: mode === "recruiter" ? "#2563eb" : "#64748b",
-      borderColor: mode === "recruiter" ? "#bfdbfe" : "#e2e8f0",
-    }}
-    onClick={() => setMode("recruiter")}
-  >
-    Recruiter Portal
-  </button>
+            {mode === "candidate" && analysis && (
+              <Badge variant="brand">Analysis Complete</Badge>
+            )}
 
-  {mode === "candidate" && analysis && (
-    <span style={G.badge}>Analysis Complete</span>
-  )}
-
-  {mode === "candidate" && analysis && (
-    <button
-      style={G.resetBtn}
-      onClick={() => {
-        setAnalysis(null);
-        setFileName("");
-      }}
-    >
-      ← New Analysis
-    </button>
-  )}
-
-</div>
+            {mode === "candidate" && analysis && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<FiArrowLeft size={14} />}
+                onClick={() => {
+                  setAnalysis(null);
+                  setFileName("");
+                }}
+              >
+                New Analysis
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
-      <div style={G.main}>
-        {mode === "recruiter" ? (
-  <RecruiterDashboard />
-) : (
-  !analysis && !loading && <UploadResume onAnalyze={analyzeResume} />
-)}
+      {isLanding ? (
+        <div className="h-[calc(100vh-4rem)] overflow-y-auto flex items-center justify-center px-6 py-6">
+          <UploadResume onAnalyze={analyzeResume} />
+        </div>
+      ) : isDashboard ? (
+        <div className="h-[calc(100vh-4rem)] overflow-hidden px-6 py-8 max-w-[1300px] mx-auto w-full">
+          <Dashboard data={analysis} />
+        </div>
+      ) : (
+        <div className="flex-1 px-6 py-8 max-w-[1300px] mx-auto w-full">
+          {mode === "recruiter" && <RecruiterDashboard />}
 
-        {mode === "candidate" && loading && (
-          <div style={G.loadWrap}>
-            <div style={G.loadCard}>
-              <div style={{ width: 52, height: 52, border: "3px solid #e2e8f0", borderTopColor: "#2563eb", borderRadius: "50%", animation: "spin 0.75s linear infinite" }} />
-              <div>
-                <p style={G.loadTitle}>Analysing your resume</p>
-                <p style={G.loadSub}>{fileName}</p>
-              </div>
-              <p style={{ color: "#94a3b8", fontSize: "0.82rem" }}>Scanning skills · Checking sections · Matching roles</p>
+          {mode === "candidate" && loading && (
+            <div className="flex flex-col items-center justify-center min-h-[70vh] gap-5">
+              <Card padding="none" shadow="raised" className="px-14 py-12 text-center flex flex-col items-center gap-4">
+                <div className="w-[52px] h-[52px] border-[3px] border-ink-200 border-t-brand-600 rounded-full animate-spin" />
+                <div>
+                  <p className="font-display text-xl font-bold text-ink-900">Analysing your resume</p>
+                  <p className="text-ink-500 text-sm">{fileName}</p>
+                </div>
+                <p className="text-ink-400 text-[0.82rem]">Scanning skills · Checking sections · Matching roles</p>
+              </Card>
             </div>
-          </div>
-        )}
-
-        {mode === "candidate" && analysis && !loading && (
-  <Dashboard data={analysis} />
-)}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

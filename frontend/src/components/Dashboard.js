@@ -1,76 +1,46 @@
 import React, { useState } from "react";
+import { FiZap, FiClipboard, FiBriefcase } from "react-icons/fi";
+import { BsLightbulb } from "react-icons/bs";
 import ScoreCard from "./ScoreCard";
 import AnalysisPanel from "./AnalysisPanel";
+import { Card } from "./ui";
+
+const TABS = [
+  { id: "skills", label: "Skills", Icon: FiZap },
+  { id: "sections", label: "Sections", Icon: FiClipboard },
+  { id: "jobs", label: "Job Match", Icon: FiBriefcase },
+  { id: "suggestions", label: "Suggestions", Icon: BsLightbulb },
+];
 
 export default function Dashboard({ data }) {
   const [activeTab, setActiveTab] = useState("skills");
 
-  const tabs = [
-    { id: "skills", label: "Skills", icon: "⚡" },
-    { id: "sections", label: "Sections", icon: "📋" },
-    { id: "jobs", label: "Job Match", icon: "💼" },
-    { id: "suggestions", label: "Suggestions", icon: "💡" },
-  ];
-
-  const s = {
-    wrap: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "24px",
-    },
-
-    topRow: {
-      display: "grid",
-      gridTemplateColumns: "380px 1fr",
-      gap: "24px",
-      alignItems: "start",
-    },
-
-    tabBar: {
-      background: "white",
-      borderRadius: "16px",
-      padding: "6px",
-      display: "flex",
-      gap: "4px",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-      border: "1px solid #f1f5f9",
-    },
-
-    tab: (active) => ({
-      flex: 1,
-      padding: "10px 16px",
-      borderRadius: "12px",
-      border: "none",
-      cursor: "pointer",
-      background: active ? "#2563eb" : "transparent",
-      color: active ? "white" : "#64748b",
-      fontWeight: 600,
-      fontSize: "0.88rem",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "6px",
-    }),
-  };
-
   return (
-    <div style={s.wrap}>
-      <div style={s.topRow}>
+    <div className="grid grid-cols-[380px_1fr] gap-6 h-full">
+      <div className="h-full min-h-0 overflow-y-auto">
         <ScoreCard data={data} />
-        <AnalysisPanel data={data} activeTab={activeTab} />
       </div>
 
-      <div style={s.tabBar}>
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            style={s.tab(activeTab === t.id)}
-            onClick={() => setActiveTab(t.id)}
-          >
-            <span>{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
+      <div className="flex flex-col gap-4 min-w-0 min-h-0">
+        <Card padding="none" className="flex gap-1 p-1.5 shrink-0">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={[
+                "flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-1.5 transition-colors duration-150",
+                activeTab === t.id ? "bg-brand-600 text-white" : "bg-transparent text-ink-500 hover:bg-ink-50",
+              ].join(" ")}
+            >
+              <t.Icon size={15} />
+              {t.label}
+            </button>
+          ))}
+        </Card>
+
+        <div className="flex-1 min-h-0">
+          <AnalysisPanel data={data} activeTab={activeTab} />
+        </div>
       </div>
     </div>
   );
