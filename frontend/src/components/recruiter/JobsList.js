@@ -77,14 +77,18 @@ export default function JobsList({
       </div>
 
       {showCreateNotice && (
-        <div className="relative bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 pr-10 py-3.5 rounded-lg text-xs mb-[18px]">
-          Job creation needs a new backend endpoint
-          (<code className="bg-yellow-800/10 px-1.5 py-0.5 rounded">POST /jobs</code>) that doesn't exist yet.
-          Add it, then this button can open a real
-          creation form.
+        <div className="relative bg-blue-50 border border-blue-200 text-blue-800 px-4 pr-10 py-3.5 rounded-lg text-xs mb-[18px]">
+          To create a job, use the API directly:{" "}
+          <code className="bg-blue-800/10 px-1.5 py-0.5 rounded">POST /jobs</code> with{" "}
+          <code className="bg-blue-800/10 px-1.5 py-0.5 rounded">title</code>,{" "}
+          <code className="bg-blue-800/10 px-1.5 py-0.5 rounded">company</code>,{" "}
+          <code className="bg-blue-800/10 px-1.5 py-0.5 rounded">description</code>, and optionally{" "}
+          <code className="bg-blue-800/10 px-1.5 py-0.5 rounded">required_skills</code>,{" "}
+          <code className="bg-blue-800/10 px-1.5 py-0.5 rounded">experience</code>, and{" "}
+          <code className="bg-blue-800/10 px-1.5 py-0.5 rounded">domain</code>.
 
           <button
-            className="absolute top-2.5 right-2.5 border-0 bg-transparent text-yellow-800 cursor-pointer"
+            className="absolute top-2.5 right-2.5 border-0 bg-transparent text-blue-800 cursor-pointer"
             onClick={() =>
               setShowCreateNotice(false)
             }

@@ -1,13 +1,13 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from pymongo import MongoClient
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from bson import ObjectId
 import os
-import certifi
+import sqlite3
+import uuid
+import json
 import pdfplumber
 import re
 import io
@@ -17,17 +17,73 @@ CORS(app)
 
 load_dotenv()
 
-MONGO_URI = os.getenv("MONGO_URI")
-
-client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
-db = client["resume_analyser"]
-
-users_collection = db["users"]
-jobs_collection = db["jobs"]
-candidates_collection = db["candidates"]
-
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production-2025")
 jwt = JWTManager(app)
+
+# ============================================================
+# SQLITE DATABASE SETUP
+# ============================================================
+
+DB_PATH = os.path.join(os.path.dirname(__file__), "resume_analyser.db")
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'recruiter'
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS jobs (
+            id TEXT PRIMARY KEY,
+            recruiter_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            company TEXT NOT NULL,
+            description TEXT NOT NULL,
+            required_skills TEXT DEFAULT '[]',
+            experience TEXT DEFAULT '',
+            domain TEXT DEFAULT ''
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS candidates (
+            id TEXT PRIMARY KEY,
+            recruiter_id TEXT NOT NULL,
+            job_id TEXT NOT NULL,
+            resume_filename TEXT,
+            resume_score INTEGER DEFAULT 0,
+            job_match_score REAL DEFAULT 0,
+            domain TEXT DEFAULT '',
+            skills_found TEXT DEFAULT '[]',
+            skills_by_category TEXT DEFAULT '{}',
+            missing_skills TEXT DEFAULT '[]',
+            matched_job_skills TEXT DEFAULT '[]',
+            missing_job_skills TEXT DEFAULT '[]',
+            sections TEXT DEFAULT '{}',
+            achievements TEXT DEFAULT '[]',
+            repetitions TEXT DEFAULT '[]',
+            word_count INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'Applied'
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -43,19 +99,22 @@ def register():
 
     email = email.lower().strip()
 
-    if users_collection.find_one({"email": email}):
-        return jsonify({"error": "User with this email already exists"}), 409
+    conn = get_db()
+    try:
+        existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        if existing:
+            return jsonify({"error": "User with this email already exists"}), 409
 
-    password_hash = generate_password_hash(password)
+        user_id = str(uuid.uuid4())
+        password_hash = generate_password_hash(password)
 
-    user = {
-        "name": name,
-        "email": email,
-        "password_hash": password_hash,
-        "role": role
-    }
-
-    users_collection.insert_one(user)
+        conn.execute(
+            "INSERT INTO users (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)",
+            (user_id, name, email, password_hash, role)
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({
         "message": "Registration successful",
@@ -77,7 +136,11 @@ def login():
 
     email = email.lower().strip()
 
-    user = users_collection.find_one({"email": email})
+    conn = get_db()
+    try:
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    finally:
+        conn.close()
 
     if not user:
         return jsonify({"error": "Invalid email or password"}), 401
@@ -86,7 +149,7 @@ def login():
         return jsonify({"error": "Invalid email or password"}), 401
 
     access_token = create_access_token(
-        identity=str(user["_id"]),
+        identity=user["id"],
         additional_claims={
             "role": user["role"],
             "name": user["name"]
@@ -120,22 +183,21 @@ def create_job():
         }), 400
 
     recruiter_id = get_jwt_identity()
+    job_id = str(uuid.uuid4())
 
-    job = {
-        "recruiter_id": recruiter_id,
-        "title": title,
-        "company": company,
-        "description": description,
-        "required_skills": required_skills,
-        "experience": experience,
-        "domain": domain
-    }
-
-    result = jobs_collection.insert_one(job)
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO jobs (id, recruiter_id, title, company, description, required_skills, experience, domain) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (job_id, recruiter_id, title, company, description, json.dumps(required_skills), experience, domain)
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({
         "message": "Job created successfully",
-        "job_id": str(result.inserted_id)
+        "job_id": job_id
     }), 201
 
 
@@ -144,18 +206,28 @@ def create_job():
 def get_jobs():
     recruiter_id = get_jwt_identity()
 
-    jobs = list(jobs_collection.find(
-        {"recruiter_id": recruiter_id},
-        {"_id": 1, "title": 1, "company": 1, "description": 1,
-         "required_skills": 1, "experience": 1, "domain": 1}
-    ))
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, title, company, description, required_skills, experience, domain FROM jobs WHERE recruiter_id = ?",
+            (recruiter_id,)
+        ).fetchall()
+    finally:
+        conn.close()
 
-    for job in jobs:
-        job["job_id"] = str(job.pop("_id"))
+    jobs = []
+    for row in rows:
+        jobs.append({
+            "job_id": row["id"],
+            "title": row["title"],
+            "company": row["company"],
+            "description": row["description"],
+            "required_skills": json.loads(row["required_skills"] or "[]"),
+            "experience": row["experience"],
+            "domain": row["domain"],
+        })
 
-    return jsonify({
-        "jobs": jobs
-    }), 200
+    return jsonify({"jobs": jobs}), 200
 
 
 @app.route("/jobs/<job_id>", methods=["PUT"])
@@ -164,44 +236,34 @@ def update_job(job_id):
     data = request.get_json()
     recruiter_id = get_jwt_identity()
 
-    allowed_fields = [
-        "title",
-        "company",
-        "description",
-        "required_skills",
-        "experience",
-        "domain"
-    ]
-
-    updates = {}
-
-    for field in allowed_fields:
-        if field in data:
-            updates[field] = data[field]
+    allowed_fields = ["title", "company", "description", "required_skills", "experience", "domain"]
+    updates = {f: data[f] for f in allowed_fields if f in data}
 
     if not updates:
-        return jsonify({
-            "error": "No valid fields provided for update"
-        }), 400
+        return jsonify({"error": "No valid fields provided for update"}), 400
 
-    result = jobs_collection.update_one(
-        {
-            "_id": ObjectId(job_id),
-            "recruiter_id": recruiter_id
-        },
-        {
-            "$set": updates
-        }
-    )
+    # Serialize required_skills to JSON string if present
+    if "required_skills" in updates:
+        updates["required_skills"] = json.dumps(updates["required_skills"])
 
-    if result.matched_count == 0:
-        return jsonify({
-            "error": "Job not found or you are not authorized to update it"
-        }), 404
+    set_clause = ", ".join(f"{k} = ?" for k in updates)
+    values = list(updates.values()) + [job_id, recruiter_id]
 
-    return jsonify({
-        "message": "Job updated successfully"
-    }), 200
+    conn = get_db()
+    try:
+        result = conn.execute(
+            f"UPDATE jobs SET {set_clause} WHERE id = ? AND recruiter_id = ?",
+            values
+        )
+        conn.commit()
+        matched = result.rowcount
+    finally:
+        conn.close()
+
+    if matched == 0:
+        return jsonify({"error": "Job not found or you are not authorized to update it"}), 404
+
+    return jsonify({"message": "Job updated successfully"}), 200
 
 
 @app.route("/jobs/<job_id>", methods=["DELETE"])
@@ -209,21 +271,21 @@ def update_job(job_id):
 def delete_job(job_id):
     recruiter_id = get_jwt_identity()
 
-    result = jobs_collection.delete_one(
-        {
-            "_id": ObjectId(job_id),
-            "recruiter_id": recruiter_id
-        }
-    )
+    conn = get_db()
+    try:
+        result = conn.execute(
+            "DELETE FROM jobs WHERE id = ? AND recruiter_id = ?",
+            (job_id, recruiter_id)
+        )
+        conn.commit()
+        deleted = result.rowcount
+    finally:
+        conn.close()
 
-    if result.deleted_count == 0:
-        return jsonify({
-            "error": "Job not found or you are not authorized to delete it"
-        }), 404
+    if deleted == 0:
+        return jsonify({"error": "Job not found or you are not authorized to delete it"}), 404
 
-    return jsonify({
-        "message": "Job deleted successfully"
-    }), 200
+    return jsonify({"message": "Job deleted successfully"}), 200
 
 
 # ============================================================
@@ -1184,38 +1246,34 @@ def upload_candidate(job_id):
 
     recruiter_id = get_jwt_identity()
 
-    # Verify that the job belongs to this recruiter.
-    job = jobs_collection.find_one({
-        "_id": ObjectId(job_id),
-        "recruiter_id": recruiter_id
-    })
+    conn = get_db()
+    try:
+        job_row = conn.execute(
+            "SELECT * FROM jobs WHERE id = ? AND recruiter_id = ?",
+            (job_id, recruiter_id)
+        ).fetchone()
+    finally:
+        conn.close()
 
-    if not job:
+    if not job_row:
         return jsonify({
             "error": "Job not found or you are not authorized to access it"
         }), 404
 
     if "resume" not in request.files:
-        return jsonify({
-            "error": "No resume file uploaded"
-        }), 400
+        return jsonify({"error": "No resume file uploaded"}), 400
 
     file = request.files["resume"]
 
     if not file.filename.lower().endswith(".pdf"):
-        return jsonify({
-            "error": "Only PDF resumes are supported"
-        }), 400
+        return jsonify({"error": "Only PDF resumes are supported"}), 400
 
     try:
         file_bytes = file.read()
 
         if not file_bytes:
-            return jsonify({
-                "error": "Uploaded resume is empty"
-            }), 400
+            return jsonify({"error": "Uploaded resume is empty"}), 400
 
-        # Reuse the existing resume analysis functions.
         text = extract_text(file_bytes)
 
         if not text.strip():
@@ -1224,70 +1282,50 @@ def upload_candidate(job_id):
             }), 400
 
         domain, domain_scores = detect_domain(text)
-
-        skills_found, missing_skills, skills_by_category = detect_skills(
-            text,
-            domain
-        )
-
+        skills_found, missing_skills, skills_by_category = detect_skills(text, domain)
         sections = check_sections(text)
         achievements = check_achievements(text)
         repetitions = check_repetition(text)
+        score, breakdown = calculate_score(sections, skills_found, achievements, repetitions)
 
-        score, breakdown = calculate_score(
-            sections,
-            skills_found,
-            achievements,
-            repetitions
-        )
-
-        # Calculate job-specific skill match.
-        required_skills = job.get("required_skills", [])
-
+        required_skills = json.loads(job_row["required_skills"] or "[]")
         text_lower = text.lower()
 
-        matched_job_skills = [
-            skill for skill in required_skills
-            if skill.lower() in text_lower
-        ]
+        matched_job_skills = [s for s in required_skills if s.lower() in text_lower]
+        missing_job_skills = [s for s in required_skills if s.lower() not in text_lower]
 
-        missing_job_skills = [
-            skill for skill in required_skills
-            if skill.lower() not in text_lower
-        ]
+        job_match_score = round(
+            (len(matched_job_skills) / len(required_skills)) * 100, 2
+        ) if required_skills else 0
 
-        if required_skills:
-            job_match_score = round(
-                (len(matched_job_skills) / len(required_skills)) * 100,
-                2
+        candidate_id = str(uuid.uuid4())
+
+        conn = get_db()
+        try:
+            conn.execute(
+                """INSERT INTO candidates
+                   (id, recruiter_id, job_id, resume_filename, resume_score, job_match_score,
+                    domain, skills_found, skills_by_category, missing_skills,
+                    matched_job_skills, missing_job_skills, sections, achievements,
+                    repetitions, word_count, status)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    candidate_id, recruiter_id, job_id, file.filename,
+                    score, job_match_score, domain,
+                    json.dumps(skills_found), json.dumps(skills_by_category),
+                    json.dumps(missing_skills), json.dumps(matched_job_skills),
+                    json.dumps(missing_job_skills), json.dumps(sections),
+                    json.dumps(achievements), json.dumps(repetitions),
+                    len(text.split()), "Applied"
+                )
             )
-        else:
-            job_match_score = 0
-
-        candidate = {
-            "recruiter_id": recruiter_id,
-            "job_id": job_id,
-            "resume_filename": file.filename,
-            "resume_score": score,
-            "job_match_score": job_match_score,
-            "domain": domain,
-            "skills_found": skills_found,
-            "skills_by_category": skills_by_category,
-            "missing_skills": missing_skills,
-            "matched_job_skills": matched_job_skills,
-            "missing_job_skills": missing_job_skills,
-            "sections": sections,
-            "achievements": achievements,
-            "repetitions": repetitions,
-            "word_count": len(text.split()),
-            "status": "Applied"
-        }
-
-        result = candidates_collection.insert_one(candidate)
+            conn.commit()
+        finally:
+            conn.close()
 
         return jsonify({
             "message": "Candidate resume uploaded and analyzed successfully",
-            "candidate_id": str(result.inserted_id),
+            "candidate_id": candidate_id,
             "job_id": job_id,
             "resume_filename": file.filename,
             "resume_score": score,
@@ -1300,9 +1338,7 @@ def upload_candidate(job_id):
         }), 201
 
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
 
 # ============================================================
@@ -1315,46 +1351,93 @@ def get_candidates(job_id):
 
     recruiter_id = get_jwt_identity()
 
-    # Verify that the job belongs to this recruiter.
-    job = jobs_collection.find_one({
-        "_id": ObjectId(job_id),
-        "recruiter_id": recruiter_id
-    })
+    conn = get_db()
+    try:
+        job_row = conn.execute(
+            "SELECT * FROM jobs WHERE id = ? AND recruiter_id = ?",
+            (job_id, recruiter_id)
+        ).fetchone()
 
-    if not job:
-        return jsonify({
-            "error": "Job not found or you are not authorized to access it"
-        }), 404
+        if not job_row:
+            return jsonify({
+                "error": "Job not found or you are not authorized to access it"
+            }), 404
 
-    candidates = list(candidates_collection.find(
-        {
-            "job_id": job_id,
-            "recruiter_id": recruiter_id
-        },
-        {
-            "_id": 1,
-            "resume_filename": 1,
-            "resume_score": 1,
-            "job_match_score": 1,
-            "domain": 1,
-            "skills_found": 1,
-            "missing_skills": 1,
-            "matched_job_skills": 1,
-            "missing_job_skills": 1,
-            "status": 1,
-            "word_count": 1
-        }
-    ).sort("job_match_score", -1))
+        rows = conn.execute(
+            """SELECT id, resume_filename, resume_score, job_match_score, domain,
+                      skills_found, missing_skills, matched_job_skills,
+                      missing_job_skills, status, word_count
+               FROM candidates
+               WHERE job_id = ? AND recruiter_id = ?
+               ORDER BY job_match_score DESC""",
+            (job_id, recruiter_id)
+        ).fetchall()
+    finally:
+        conn.close()
 
-    for candidate in candidates:
-        candidate["candidate_id"] = str(candidate.pop("_id"))
+    candidates = []
+    for row in rows:
+        candidates.append({
+            "candidate_id": row["id"],
+            "resume_filename": row["resume_filename"],
+            "resume_score": row["resume_score"],
+            "job_match_score": row["job_match_score"],
+            "domain": row["domain"],
+            "skills_found": json.loads(row["skills_found"] or "[]"),
+            "missing_skills": json.loads(row["missing_skills"] or "[]"),
+            "matched_job_skills": json.loads(row["matched_job_skills"] or "[]"),
+            "missing_job_skills": json.loads(row["missing_job_skills"] or "[]"),
+            "status": row["status"],
+            "word_count": row["word_count"],
+        })
 
     return jsonify({
         "job_id": job_id,
-        "job_title": job.get("title"),
-        "company": job.get("company"),
+        "job_title": job_row["title"],
+        "company": job_row["company"],
         "candidate_count": len(candidates),
         "candidates": candidates
+    }), 200
+
+
+# ============================================================
+# CANDIDATE STATUS UPDATE API
+# ============================================================
+
+@app.route("/candidates/<candidate_id>/status", methods=["PUT"])
+@jwt_required()
+def update_candidate_status(candidate_id):
+    recruiter_id = get_jwt_identity()
+    data = request.get_json()
+
+    status = data.get("status")
+    valid_statuses = ["Applied", "Screening", "Shortlisted", "Interview", "Selected", "Rejected"]
+
+    if not status or status not in valid_statuses:
+        return jsonify({
+            "error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+        }), 400
+
+    conn = get_db()
+    try:
+        result = conn.execute(
+            "UPDATE candidates SET status = ? WHERE id = ? AND recruiter_id = ?",
+            (status, candidate_id, recruiter_id)
+        )
+        conn.commit()
+        matched = result.rowcount
+    finally:
+        conn.close()
+
+    if matched == 0:
+        return jsonify({
+            "error": "Candidate not found or you are not authorized to update it"
+        }), 404
+
+    return jsonify({
+        "message": "Candidate status updated successfully",
+        "candidate_id": candidate_id,
+        "status": status
     }), 200
 
 
