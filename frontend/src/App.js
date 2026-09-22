@@ -81,10 +81,10 @@ export default function App() {
         <div className="h-[calc(100vh-4rem)] overflow-hidden px-6 py-8 max-w-[1300px] mx-auto w-full">
           <Dashboard data={analysis} />
         </div>
+      ) : mode === "recruiter" ? (
+        <RecruiterDashboard />
       ) : (
         <div className="flex-1 px-6 py-8 max-w-[1300px] mx-auto w-full">
-          {mode === "recruiter" && <RecruiterDashboard />}
-
           {mode === "candidate" && loading && (
             <div className="flex flex-col items-center justify-center min-h-[70vh] gap-5">
               <Card padding="none" shadow="raised" className="px-14 py-12 text-center flex flex-col items-center gap-4">
