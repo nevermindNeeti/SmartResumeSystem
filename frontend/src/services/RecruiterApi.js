@@ -39,6 +39,12 @@ async function request(path, options = {}) {
 export const recruiterApi = {
   getJobs: () => request("/jobs"),
 
+  createJob: (data) =>
+    request("/jobs", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
   updateJob: (jobId, data) =>
     request(`/jobs/${jobId}`, {
       method: "PUT",

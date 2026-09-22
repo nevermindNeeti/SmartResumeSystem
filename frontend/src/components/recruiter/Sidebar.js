@@ -18,7 +18,7 @@ export default function Sidebar({
     localStorage.getItem("recruiterName") || "Recruiter";
 
   return (
-    <aside className="w-full md:w-[250px] md:min-h-screen bg-ink-900 text-white flex flex-col shrink-0 md:sticky md:top-0 md:h-screen">
+    <aside className="w-full md:w-[250px] bg-ink-900 text-white flex flex-col shrink-0 overflow-y-auto">
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/10">
         <div className="w-[42px] h-[42px] rounded-[11px] flex items-center justify-center bg-brand-600 text-white text-sm font-extrabold shrink-0">
           SR

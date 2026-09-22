@@ -1,7 +1,6 @@
 Flask
 flask-cors
 flask-jwt-extended
-pymongo
 python-dotenv
-certifi
 pdfplumber
+werkzeug

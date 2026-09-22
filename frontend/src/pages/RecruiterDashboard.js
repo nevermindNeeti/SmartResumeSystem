@@ -213,7 +213,7 @@ export default function RecruiterDashboard() {
   // --------------------------------------------------
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-ink-100 text-ink-900 font-body">
+    <div className="h-[calc(100vh-4rem)] flex flex-col md:flex-row bg-ink-100 text-ink-900 font-body overflow-hidden">
 
       <Sidebar
         activeView={activeView}
@@ -221,11 +221,11 @@ export default function RecruiterDashboard() {
         onLogout={handleLogout}
       />
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
 
         <Topbar />
 
-        <main className="p-5 md:p-8 max-w-[1500px] mx-auto">
+        <main className="flex-1 overflow-y-auto p-5 md:p-8 max-w-[1500px] mx-auto w-full">
 
           {activeView === "overview" && (
             <Overview
@@ -241,6 +241,7 @@ export default function RecruiterDashboard() {
               jobsError={jobsError}
               onRefresh={loadJobs}
               onSelectJob={setSelectedJobId}
+              onJobCreated={loadJobs}
             />
           )}
 
@@ -261,6 +262,7 @@ export default function RecruiterDashboard() {
                 setSelectedJobId(id);
                 setActiveView("jobs");
               }}
+              onJobCreated={loadJobs}
             />
           )}
 
