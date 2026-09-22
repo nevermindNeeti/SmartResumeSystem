@@ -26,6 +26,15 @@ No database account or external service required.
 
 ---
 
+## Getting started
+
+```bash
+git clone https://github.com/nevermindNeeti/SmartResumeSystem.git
+cd SmartResumeSystem
+```
+
+---
+
 ## Running the app
 
 You need two terminals — one for the backend, one for the frontend.
@@ -33,7 +42,7 @@ You need two terminals — one for the backend, one for the frontend.
 ### Terminal 1 — Backend (Flask)
 
 ```bash
-cd clg_project/SmartResumeSystem/backend
+cd backend
 
 # Create and activate virtual environment (first time only)
 python3 -m venv venv
@@ -47,7 +56,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The API starts on **http://127.0.0.1:5001**.  
+The API starts on **http://127.0.0.1:5001**.
 A SQLite database file `resume_analyser.db` is created automatically in `backend/` on first run.
 
 Verify it is working: open http://127.0.0.1:5001 in your browser — you should see:
@@ -58,7 +67,7 @@ Verify it is working: open http://127.0.0.1:5001 in your browser — you should 
 ### Terminal 2 — Frontend (React)
 
 ```bash
-cd clg_project/SmartResumeSystem/frontend
+cd frontend
 
 # Install dependencies (first time only)
 npm install
