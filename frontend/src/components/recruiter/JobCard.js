@@ -5,6 +5,7 @@ export default function JobCard({
   job,
   applicantCount,
   onViewCandidates,
+  buttonLabel = "View Candidates",
 }) {
   return (
     <Card className="hover:border-ink-300 hover:shadow-raised hover:-translate-y-0.5 transition-all duration-200">
@@ -42,7 +43,7 @@ export default function JobCard({
         onClick={onViewCandidates}
         className="w-full mt-[18px] justify-center"
       >
-        View Candidates
+        {buttonLabel}
       </Button>
 
     </Card>

@@ -260,9 +260,16 @@ export default function RecruiterDashboard() {
               onRefresh={loadJobs}
               onSelectJob={(id) => {
                 setSelectedJobId(id);
-                setActiveView("jobs");
               }}
               onJobCreated={loadJobs}
+              selectLabel="View Candidates"
+            />
+          )}
+
+          {activeView === "candidates" && selectedJob && (
+            <JobDetail
+              job={selectedJob}
+              onBack={() => setSelectedJobId(null)}
             />
           )}
 

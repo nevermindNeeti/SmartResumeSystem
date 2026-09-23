@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import UploadResume from "./components/UploadResume";
 import Dashboard from "./components/Dashboard";
@@ -10,10 +10,19 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [publicJobs, setPublicJobs] = useState([]);
 
   const isLanding = mode === "candidate" && !analysis && !loading;
   const isDashboard = mode === "candidate" && !!analysis && !loading;
   const showModeToggle = isLanding || mode === "recruiter";
+
+  // Fetch real posted jobs once so the Job Match tab shows actual DB jobs
+  useEffect(() => {
+    fetch("http://127.0.0.1:5001/jobs/public")
+      .then((r) => r.json())
+      .then((d) => setPublicJobs(d.jobs || []))
+      .catch(() => {}); // silently ignore if backend is down
+  }, []);
 
   const analyzeResume = async (file) => {
     setLoading(true);
@@ -79,7 +88,7 @@ export default function App() {
         </div>
       ) : isDashboard ? (
         <div className="h-[calc(100vh-4rem)] overflow-hidden px-6 py-8 max-w-[1300px] mx-auto w-full">
-          <Dashboard data={analysis} />
+          <Dashboard data={analysis} publicJobs={publicJobs} />
         </div>
       ) : mode === "recruiter" ? (
         <RecruiterDashboard />

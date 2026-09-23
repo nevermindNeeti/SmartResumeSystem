@@ -12,7 +12,7 @@ const TABS = [
   { id: "suggestions", label: "Suggestions", Icon: BsLightbulb },
 ];
 
-export default function Dashboard({ data }) {
+export default function Dashboard({ data, publicJobs = [] }) {
   const [activeTab, setActiveTab] = useState("skills");
 
   return (
@@ -39,7 +39,7 @@ export default function Dashboard({ data }) {
         </Card>
 
         <div className="flex-1 min-h-0">
-          <AnalysisPanel data={data} activeTab={activeTab} />
+          <AnalysisPanel data={data} activeTab={activeTab} publicJobs={publicJobs} />
         </div>
       </div>
     </div>

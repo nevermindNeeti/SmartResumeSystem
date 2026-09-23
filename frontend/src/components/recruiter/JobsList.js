@@ -16,6 +16,7 @@ export default function JobsList({
   onRefresh,
   onSelectJob,
   onJobCreated,
+  selectLabel,
 }) {
   const [candidateCounts, setCandidateCounts] = useState({});
   const [showModal, setShowModal] = useState(false);
@@ -58,22 +59,35 @@ export default function JobsList({
     return <ErrorState message={jobsError} onRetry={onRefresh} />;
   }
 
+  const isCandidatesView = !!selectLabel;
+
   return (
     <div>
       <div className="flex items-center justify-between gap-4 mb-5">
-        <h2 className="font-display text-xl font-bold text-ink-900 m-0">Jobs</h2>
-        <Button variant="primary" onClick={() => setShowModal(true)}>
-          + Create Job
-        </Button>
+        <h2 className="font-display text-xl font-bold text-ink-900 m-0">
+          {isCandidatesView ? "Select a Job to View Candidates" : "Jobs"}
+        </h2>
+        {!isCandidatesView && (
+          <Button variant="primary" onClick={() => setShowModal(true)}>
+            + Create Job
+          </Button>
+        )}
       </div>
 
       {jobs.length === 0 ? (
-        <EmptyState
-          title="No jobs yet"
-          subtitle="Create your first job to start screening candidates."
-          actionLabel="Create Job"
-          onAction={() => setShowModal(true)}
-        />
+        isCandidatesView ? (
+          <EmptyState
+            title="No jobs posted yet"
+            subtitle="Candidates appear once you create a job and upload resumes. Go to Jobs to create your first posting."
+          />
+        ) : (
+          <EmptyState
+            title="No jobs yet"
+            subtitle="Create your first job to start screening candidates."
+            actionLabel="Create Job"
+            onAction={() => setShowModal(true)}
+          />
+        )
       ) : (
         <div className={jobsGridCls}>
           {jobs.map((job) => (
@@ -82,12 +96,13 @@ export default function JobsList({
               job={job}
               applicantCount={candidateCounts[job.job_id] ?? "…"}
               onViewCandidates={() => onSelectJob(job.job_id)}
+              buttonLabel={selectLabel || "View Candidates"}
             />
           ))}
         </div>
       )}
 
-      {showModal && (
+      {!isCandidatesView && showModal && (
         <CreateJobModal
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}

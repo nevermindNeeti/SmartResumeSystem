@@ -83,33 +83,62 @@ export default function Overview({ jobs, jobsLoading }) {
       candidate.status === "Interview"
   ).length;
 
+  const recruiterName = localStorage.getItem("recruiterName") || "Recruiter";
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
+    <div>
+      <div className="mb-6">
+        <h2 className="font-display text-xl font-bold text-ink-900 m-0">
+          Welcome back, {recruiterName.split(" ")[0]} 👋
+        </h2>
+        <p className="text-ink-400 text-sm mt-1">Here's your recruitment snapshot.</p>
+      </div>
 
-      <StatCard
-        label="Total Jobs"
-        value={jobs.length}
-        icon={<FiBriefcase size={20} />}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px] mb-7">
 
-      <StatCard
-        label="Total Candidates"
-        value={totalCandidates}
-        icon={<FiUsers size={20} />}
-      />
+        <StatCard
+          label="Total Jobs"
+          value={jobs.length}
+          icon={<FiBriefcase size={20} />}
+        />
 
-      <StatCard
-        label="Shortlisted"
-        value={shortlisted}
-        icon={<FiStar size={20} />}
-      />
+        <StatCard
+          label="Total Candidates"
+          value={totalCandidates}
+          icon={<FiUsers size={20} />}
+        />
 
-      <StatCard
-        label="Interviews"
-        value={interviews}
-        icon={<FiCalendar size={20} />}
-      />
+        <StatCard
+          label="Shortlisted"
+          value={shortlisted}
+          icon={<FiStar size={20} />}
+        />
 
+        <StatCard
+          label="Interviews"
+          value={interviews}
+          icon={<FiCalendar size={20} />}
+        />
+
+      </div>
+
+      {jobs.length === 0 && (
+        <div className="bg-white border border-dashed border-ink-300 rounded-xl px-8 py-12 text-center max-w-[540px] mx-auto mt-4">
+          <div className="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
+            <FiBriefcase size={26} className="text-brand-600" />
+          </div>
+          <p className="font-display text-lg font-bold text-ink-900 mb-2">No jobs posted yet</p>
+          <p className="text-ink-400 text-sm leading-relaxed mb-1">
+            Head to the <strong className="text-ink-700">Jobs</strong> tab and create your first job posting to start screening candidates.
+          </p>
+        </div>
+      )}
+
+      {jobs.length > 0 && totalCandidates === 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-6 py-4 text-sm text-amber-800 mt-2">
+          You have {jobs.length} job{jobs.length !== 1 ? "s" : ""} posted but no candidates yet. Open a job and upload PDF resumes to start screening.
+        </div>
+      )}
     </div>
   );
 }

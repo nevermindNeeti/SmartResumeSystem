@@ -218,13 +218,19 @@ export default function JobDetail({ job, onBack }) {
             onRetry={loadCandidates}
           />
         ) : filteredCandidates.length === 0 ? (
-          <div className="bg-white border border-dashed border-ink-300 rounded-lg px-6 py-11 text-center">
-            <div className="text-ink-700 text-base font-bold">
-              No candidates found
+          <div className="bg-white border border-dashed border-ink-300 rounded-lg px-6 py-14 text-center">
+            <div className="w-12 h-12 rounded-full bg-ink-100 flex items-center justify-center mx-auto mb-4">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
             </div>
-
-            <div className="text-ink-400 text-xs mt-1.5">
-              Upload resumes or change your filters.
+            <div className="text-ink-700 text-base font-bold mb-1.5">
+              {candidates.length === 0 ? "No candidates yet" : "No candidates match your filters"}
+            </div>
+            <div className="text-ink-400 text-xs leading-relaxed max-w-[260px] mx-auto">
+              {candidates.length === 0
+                ? "Upload PDF resumes above to start screening candidates for this job."
+                : "Try clearing some filters to see more results."}
             </div>
           </div>
         ) : (
@@ -238,6 +244,7 @@ export default function JobDetail({ job, onBack }) {
       </div>
 
       <CandidateDrawer
+        key={selectedCandidate?.candidate_id}
         candidate={selectedCandidate}
         onClose={() =>
           setSelectedCandidate(null)

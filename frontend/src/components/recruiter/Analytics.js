@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiUsers, FiTarget, FiFileText, FiStar } from "react-icons/fi";
+import { FiUsers, FiTarget, FiFileText, FiStar, FiBarChart2 } from "react-icons/fi";
 import { recruiterApi } from "../../services/RecruiterApi";
 import StatCard from "./StatCard";
 import ErrorState from "./ErrorState";
@@ -121,6 +121,24 @@ export default function Analytics({ jobs }) {
         message={error}
         onRetry={loadAnalytics}
       />
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <div>
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <div>
+            <h2 className="font-display text-xl font-bold text-ink-900 m-0">Analytics</h2>
+            <div className="text-ink-400 text-xs mt-1">Recruitment pipeline and candidate performance overview</div>
+          </div>
+        </div>
+        <div className="bg-white border border-dashed border-ink-300 rounded-xl px-8 py-14 text-center">
+          <FiBarChart2 size={30} className="text-ink-300 mx-auto mb-4" />
+          <p className="font-bold text-ink-700 mb-1">No data yet</p>
+          <p className="text-ink-400 text-xs leading-relaxed">Create jobs and upload candidate resumes to see your recruitment analytics here.</p>
+        </div>
+      </div>
     );
   }
 
