@@ -6,6 +6,7 @@ import Overview from "../components/recruiter/Overview";
 import JobsList from "../components/recruiter/JobsList";
 import JobDetail from "../components/recruiter/JobDetail";
 import Analytics from "../components/recruiter/Analytics";
+import AllCandidatesView from "../components/recruiter/AllCandidatesView";
 
 import { recruiterApi } from "../services/RecruiterApi";
 import { Card, Button, Input } from "../components/ui";
@@ -252,25 +253,8 @@ export default function RecruiterDashboard() {
             />
           )}
 
-          {activeView === "candidates" && !selectedJob && (
-            <JobsList
-              jobs={jobs}
-              jobsLoading={jobsLoading}
-              jobsError={jobsError}
-              onRefresh={loadJobs}
-              onSelectJob={(id) => {
-                setSelectedJobId(id);
-              }}
-              onJobCreated={loadJobs}
-              selectLabel="View Candidates"
-            />
-          )}
-
-          {activeView === "candidates" && selectedJob && (
-            <JobDetail
-              job={selectedJob}
-              onBack={() => setSelectedJobId(null)}
-            />
+          {activeView === "candidates" && (
+            <AllCandidatesView jobs={jobs} jobsLoading={jobsLoading} />
           )}
 
           {activeView === "analytics" && (
